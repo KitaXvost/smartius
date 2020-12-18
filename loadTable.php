@@ -4,12 +4,11 @@ include_once 'config.php';
 $database = new Database();
 $dbh = $database->getConnection();
 
-$date1 = (new DateTime($_POST['date1']))->format('Y-m-d');
-$date2 = (new DateTime($_POST['date2']))->format('Y-m-d');
+$date1 = (new DateTime($_POST['date1']))->format('Y-m-d 00:00:00');
+$date2 = (new DateTime($_POST['date2']))->format('Y-m-d 23:59:59');
 if(empty($_POST['date2'])){
   $date2 = $date1;
 }
-
 $org_id = $_POST['org'];
 $stmt = $dbh->prepare("SELECT collaborators.fullname, learnings.state_id, orgs.name AS orgs_name, courses.name AS courses_name
                        FROM learnings
@@ -17,8 +16,9 @@ $stmt = $dbh->prepare("SELECT collaborators.fullname, learnings.state_id, orgs.n
                        LEFT JOIN orgs ON collaborators.org_id = orgs.id
                        LEFT JOIN courses ON learnings.course_id = courses.id
                        WHERE collaborators.org_id = :org_id
-                       AND learnings.start_date BETWEEN :date1 AND :date2
-                       AND learnings.finish_date BETWEEN :date1 AND :date2");
+                       AND
+                       learnings.start_date <= :date2 AND
+                       learnings.finish_date >= :date1 ");
 
 $stmt->execute(['org_id' => $org_id, 'date1' => $date1, 'date2' => $date2]);
 ?>
